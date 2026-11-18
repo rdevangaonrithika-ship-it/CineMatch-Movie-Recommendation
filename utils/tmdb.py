@@ -311,49 +311,100 @@ def _tmdb_top_rated(media_type: str = "movie") -> list:
 
 # ── Public API ────────────────────────────────────────────────────────────────
 
+def _clean_movielens_title(title: str) -> tuple[str, str]:
+    """
+    Convert a MovieLens-formatted title into a clean search title + year.
+
+    Examples
+    --------
+    "Toy Story (1995)"                    → ("Toy Story",        "1995")
+    "Piano, The (1993)"                   → ("The Piano",        "1993")
+    "American President, The (1995)"      → ("The American President", "1995")
+    "City of Lost Children, The (1995)"   → ("The City of Lost Children", "1995")
+    "Seven (a.k.a. Se7en) (1995)"         → ("Seven",            "1995")
+    "Star Wars: Episode IV - A New Hope (1977)" → ("Star Wars: Episode IV - A New Hope", "1977")
+    "Flintstones, The (1994)"             → ("The Flintstones",  "1994")
+    """
+    # 1. Extract year from the LAST parenthesised 4-digit number
+    year = ""
+    m = re.search(r"\((\d{4})\)\s*$", title)
+    if m:
+        year = m.group(1)
+        title = title[: m.start()].strip()
+
+    # 2. Remove secondary parenthetical notes like "(a.k.a. Se7en)"
+    title = re.sub(r"\s*\(a\.k\.a\..*?\)", "", title, flags=re.IGNORECASE).strip()
+
+    # 3. Move trailing ", The" / ", A" / ", An" / ", Les" / ", Die" etc. to front
+    article_map = {
+        ", The": "The ",
+        ", A":   "A ",
+        ", An":  "An ",
+        ", Les": "Les ",
+        ", Die": "Die ",
+        ", El":  "El ",
+        ", La":  "La ",
+        ", L'":  "L'",
+        ", Lo":  "Lo ",
+    }
+    for suffix, prefix in article_map.items():
+        if title.endswith(suffix):
+            title = prefix + title[: -len(suffix)].strip()
+            break
+
+    return title.strip(), year
+
+
+@functools.lru_cache(maxsize=10000)
+def _cached_poster_url(clean_title: str, year: str, genres: str) -> str:
+    """
+    Inner cached lookup.  Separated from get_poster_url so the
+    expensive network call is cached by (clean_title, year) rather than
+    the raw MovieLens title string.
+    """
+    result = _tmdb_search_movie(clean_title, year)
+    if result and result.get("poster_path"):
+        return f"{_IMG_BASE_W}{result['poster_path']}"
+    # Retry once without the year constraint (catches slight year mismatches)
+    if year:
+        result2 = _tmdb_search_movie(clean_title, "")
+        if result2 and result2.get("poster_path"):
+            return f"{_IMG_BASE_W}{result2['poster_path']}"
+    return ""   # signal: use placeholder
+
+
 def get_poster_url(title: str, year: str = "", genres: str = "") -> str:
     """
     Return a poster image URL for the given movie title.
 
-    Priority:
-      1. TMDB poster path  →  full URL via _IMG_BASE_W
-      2. Genre-coloured SVG placeholder (always available, never random)
+    Steps
+    -----
+    1. Clean the MovieLens title format (move articles, strip year suffix,
+       remove a.k.a. notes) so the TMDB search query is accurate.
+    2. Query TMDB /search/movie (cached per clean title + year).
+    3. Return the w500 poster URL on success.
+    4. Fall back to the genre-coloured SVG placeholder — never a broken image.
 
     Parameters
     ----------
-    title  : Movie title (with or without year suffix like "(1995)")
-    year   : Release year string, e.g. "1995". Extracted from title if blank.
-    genres : Pipe-separated genre string used for placeholder colour.
+    title  : Raw MovieLens title, e.g. "Piano, The (1993)"
+    year   : Override release year. Extracted from title automatically if blank.
+    genres : Pipe-separated genre string — used only for placeholder colour.
     """
-    # Extract year from title if not given separately
-    if not year:
-        m = re.search(r"\((\d{4})\)\s*$", title)
-        year = m.group(1) if m else ""
+    clean_title, extracted_year = _clean_movielens_title(title)
+    effective_year = year if year else extracted_year
 
-    # Clean title (remove year suffix for search)
-    clean_title = re.sub(r"\s*\(\d{4}\)\s*$", "", title).strip()
-    # Remove common "The, A, An" article moves (e.g. "President, The" → "The President")
-    if clean_title.endswith(", The"):
-        clean_title = "The " + clean_title[:-5]
-    elif clean_title.endswith(", A"):
-        clean_title = "A " + clean_title[:-3]
-    elif clean_title.endswith(", An"):
-        clean_title = "An " + clean_title[:-4]
-
-    result = _tmdb_search_movie(clean_title, year)
-    if result and result.get("poster_path"):
-        return f"{_IMG_BASE_W}{result['poster_path']}"
-
+    url = _cached_poster_url(clean_title, effective_year, genres)
+    if url:
+        return url
     return placeholder_img_url(genres, title)
 
 
 def get_backdrop_url(title: str, year: str = "", genres: str = "") -> str:
     """Return a backdrop (wide) image URL, falls back to poster, then placeholder."""
-    if not year:
-        m = re.search(r"\((\d{4})\)\s*$", title)
-        year = m.group(1) if m else ""
-    clean_title = re.sub(r"\s*\(\d{4}\)\s*$", "", title).strip()
-    result = _tmdb_search_movie(clean_title, year)
+    clean_title, extracted_year = _clean_movielens_title(title)
+    effective_year = year if year else extracted_year
+    result = _tmdb_search_movie(clean_title, effective_year)
     if result:
         if result.get("backdrop_path"):
             return f"{_IMG_BASE_B}{result['backdrop_path']}"
@@ -365,22 +416,14 @@ def get_backdrop_url(title: str, year: str = "", genres: str = "") -> str:
 def get_movie_details(title: str, year: str = "", genres: str = "") -> dict:
     """
     Return a rich detail dict for a movie.
-
     Always returns a dict — never raises. Falls back gracefully.
-
-    Keys returned:
-      title, year, genres, overview, runtime_min, vote_average,
-      vote_count, poster_url, backdrop_url, tmdb_id,
-      release_date, original_language, tagline
     """
-    if not year:
-        m = re.search(r"\((\d{4})\)\s*$", title)
-        year = m.group(1) if m else ""
-    clean_title = re.sub(r"\s*\(\d{4}\)\s*$", "", title).strip()
+    clean_title, extracted_year = _clean_movielens_title(title)
+    effective_year = year if year else extracted_year
 
     base = {
         "title":             title,
-        "year":              year,
+        "year":              effective_year,
         "genres":            genres,
         "overview":          "",
         "runtime_min":       0,
@@ -389,27 +432,29 @@ def get_movie_details(title: str, year: str = "", genres: str = "") -> dict:
         "poster_url":        placeholder_img_url(genres, title),
         "backdrop_url":      placeholder_img_url(genres, title),
         "tmdb_id":           0,
-        "release_date":      year,
+        "release_date":      effective_year,
         "original_language": "",
         "tagline":           "",
     }
 
-    search = _tmdb_search_movie(clean_title, year)
+    search = _tmdb_search_movie(clean_title, effective_year)
+    if not search and effective_year:
+        # retry without year
+        search = _tmdb_search_movie(clean_title, "")
     if not search:
         return base
 
-    base["tmdb_id"]    = search.get("id", 0)
+    base["tmdb_id"]      = search.get("id", 0)
     base["vote_average"] = round(search.get("vote_average", 0.0), 1)
     base["vote_count"]   = search.get("vote_count", 0)
     base["overview"]     = search.get("overview", "")
-    base["release_date"] = search.get("release_date", year)
+    base["release_date"] = search.get("release_date", effective_year)
 
     if search.get("poster_path"):
         base["poster_url"]   = f"{_IMG_BASE_W}{search['poster_path']}"
     if search.get("backdrop_path"):
         base["backdrop_url"] = f"{_IMG_BASE_B}{search['backdrop_path']}"
 
-    # Fetch full details for runtime & tagline
     if base["tmdb_id"]:
         details = _tmdb_movie_details(base["tmdb_id"])
         if details:

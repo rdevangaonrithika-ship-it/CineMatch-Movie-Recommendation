@@ -121,20 +121,52 @@ p  { color: #8892a4 !important; line-height: 1.75 !important; }
 }
 
 /* ═══════════════════════════════ POSTER CARD ═════════════════════════ */
+/*
+ * Cards are now rendered with st.image() + st.markdown() per column.
+ * The CSS below styles the st.image wrapper and the footer text.
+ */
+
+/* Force every st.image inside a card column to be 2:3 and cover-fit */
+[data-testid="stImage"] {
+    display: block !important;
+    border-radius: 10px !important;
+    overflow: hidden !important;
+    border: 1px solid #1e2a3a !important;
+    transition: transform 0.3s ease, box-shadow 0.3s ease,
+                border-color 0.3s ease !important;
+}
+[data-testid="stImage"]:hover {
+    transform: translateY(-6px) !important;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.65),
+                0 0 0 1px rgba(229,9,20,0.4) !important;
+    border-color: rgba(229,9,20,0.4) !important;
+    z-index: 10 !important;
+}
+[data-testid="stImage"] img {
+    width: 100% !important;
+    aspect-ratio: 2/3 !important;
+    object-fit: cover !important;
+    display: block !important;
+    transition: transform 0.4s ease !important;
+}
+[data-testid="stImage"]:hover img {
+    transform: scale(1.05) !important;
+}
+
+/* Legacy .poster-card  (used by HTML fallback / tests) */
 .poster-card {
     position: relative;
     border-radius: 10px;
     overflow: hidden;
     background: #12121a;
     cursor: pointer;
-    transition: transform 0.32s cubic-bezier(.25,.8,.25,1),
-                box-shadow 0.32s ease;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
     border: 1px solid #1e2a3a;
     display: block;
 }
 .poster-card:hover {
-    transform: translateY(-8px) scale(1.03);
-    box-shadow: 0 24px 56px rgba(0,0,0,0.7),
+    transform: translateY(-6px) scale(1.03);
+    box-shadow: 0 20px 50px rgba(0,0,0,0.65),
                 0 0 0 1px rgba(229,9,20,0.4);
     z-index: 20;
 }
@@ -145,137 +177,66 @@ p  { color: #8892a4 !important; line-height: 1.75 !important; }
     display: block;
     transition: transform 0.4s ease;
 }
-.poster-card:hover img.poster-img { transform: scale(1.06); }
+.poster-card:hover img.poster-img { transform: scale(1.05); }
 
-/* gradient overlay — always present, stronger on hover */
+/* gradient overlay — renders over the img, under the text */
 .poster-card .poster-overlay {
     position: absolute;
     inset: 0;
     background: linear-gradient(
         to top,
-        rgba(0,0,0,0.95) 0%,
-        rgba(0,0,0,0.5)  45%,
-        rgba(0,0,0,0.0)  75%
+        rgba(0,0,0,0.90) 0%,
+        rgba(0,0,0,0.40) 45%,
+        transparent 75%
     );
-    transition: background 0.3s ease;
+    pointer-events: none;
 }
 .poster-card:hover .poster-overlay {
     background: linear-gradient(
         to top,
-        rgba(0,0,0,0.98) 0%,
-        rgba(0,0,0,0.65) 55%,
-        rgba(0,0,0,0.15) 100%
+        rgba(0,0,0,0.95) 0%,
+        rgba(0,0,0,0.60) 55%,
+        rgba(0,0,0,0.10) 100%
     );
 }
 
-/* content inside overlay */
+/* text pinned to bottom of card */
 .poster-card .poster-info {
     position: absolute;
     bottom: 0; left: 0; right: 0;
     padding: 14px 12px 12px;
-    transform: translateY(0);
-    transition: transform 0.3s ease;
 }
 .poster-card .poster-title {
-    font-size: 13px;
-    font-weight: 700;
-    color: #f1f1f1;
-    line-height: 1.3;
-    margin-bottom: 4px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 13px; font-weight: 700; color: #f1f1f1;
+    line-height: 1.3; margin-bottom: 4px;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .poster-card .poster-meta {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: wrap;
-    margin-bottom: 0;
-    transition: opacity 0.3s ease, margin 0.3s ease;
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
 }
-.poster-card .poster-year {
-    font-size: 11px; color: #94a3b8; font-weight: 500;
-}
-.poster-card .poster-rating {
-    font-size: 11px; color: #fbbf24; font-weight: 700;
-    display: flex; align-items: center; gap: 2px;
-}
+.poster-card .poster-year   { font-size: 11px; color: #94a3b8; font-weight: 500; }
+.poster-card .poster-rating { font-size: 11px; color: #fbbf24; font-weight: 700; }
 .poster-card .poster-genre-pill {
-    font-size: 10px;
-    color: #a78bfa;
-    background: rgba(124,58,237,0.18);
-    border: 1px solid rgba(124,58,237,0.28);
-    padding: 1px 7px;
-    border-radius: 20px;
-    white-space: nowrap;
+    font-size: 10px; color: #a78bfa;
+    background: rgba(124,58,237,0.18); border: 1px solid rgba(124,58,237,0.28);
+    padding: 1px 7px; border-radius: 20px; white-space: nowrap;
 }
 
-/* action buttons — hidden until hover */
-.poster-card .poster-actions {
-    position: absolute;
-    top: 10px; right: 10px;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    opacity: 0;
-    transform: translateX(8px);
-    transition: opacity 0.25s ease, transform 0.25s ease;
-}
-.poster-card:hover .poster-actions {
-    opacity: 1;
-    transform: translateX(0);
-}
-.poster-action-btn {
-    width: 34px; height: 34px;
-    border-radius: 50%;
-    border: none;
-    cursor: pointer;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 14px;
-    transition: transform 0.2s, background 0.2s;
-    text-decoration: none;
-}
-.poster-action-btn:hover { transform: scale(1.15); }
-.poster-action-btn.detail-btn {
-    background: rgba(229,9,20,0.9);
-    backdrop-filter: blur(4px);
-}
-.poster-action-btn.wl-btn {
-    background: rgba(255,255,255,0.15);
-    backdrop-filter: blur(4px);
-}
-.poster-action-btn.wl-btn.in-wl {
-    background: rgba(229,9,20,0.75);
-}
-
-/* rank badge (top-left) */
+/* rank / sim / TV badges */
 .poster-rank {
-    position: absolute;
-    top: 10px; left: 10px;
-    width: 26px; height: 26px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, #e50914, #7c3aed);
-    color: #fff;
-    font-size: 11px;
-    font-weight: 800;
-    display: flex; align-items: center; justify-content: center;
-    z-index: 5;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.5);
-}
-
-/* similarity badge */
-.sim-badge-poster {
-    position: absolute;
-    top: 10px; left: 10px;
+    position: absolute; top: 10px; left: 10px;
+    width: 26px; height: 26px; border-radius: 50%;
     background: linear-gradient(135deg,#e50914,#7c3aed);
-    color:#fff;
-    font-size:10px; font-weight:700;
-    padding:3px 8px;
-    border-radius:20px;
-    z-index:5;
-    box-shadow:0 2px 8px rgba(0,0,0,0.4);
-    white-space:nowrap;
+    color: #fff; font-size: 11px; font-weight: 800;
+    display: flex; align-items: center; justify-content: center;
+    z-index: 5; box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+}
+.sim-badge-poster {
+    position: absolute; top: 10px; left: 10px;
+    background: linear-gradient(135deg,#e50914,#7c3aed);
+    color: #fff; font-size: 10px; font-weight: 700;
+    padding: 3px 8px; border-radius: 20px; z-index: 5;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.4); white-space: nowrap;
 }
 
 /* ═══════════════════════════════ HORIZONTAL SCROLL ROW ═══════════════ */
@@ -580,6 +541,114 @@ def section_header(title: str, subtitle: str = ""):
     )
 
 
+def render_poster_card(
+    col,
+    title: str,
+    poster_url: str,
+    genres: str = "",
+    year: str = "",
+    rating: str = "",
+    similarity_pct: str = "",
+    rank: int = 0,
+    is_tv: bool = False,
+):
+    """
+    Render a complete poster card inside a Streamlit column.
+
+    Uses st.image() for the actual poster (the only reliable way to show
+    arbitrary image URLs in Streamlit without them being stripped) and
+    st.markdown() for the overlay badge + footer metadata.
+
+    Call this instead of st.markdown(poster_card_html(...)).
+    """
+    genre_parts = [g.strip() for g in genres.replace("|", ",").split(",") if g.strip()]
+    genre_text  = "  ·  ".join(genre_parts[:2]) if genre_parts else ""
+
+    # Build the top badge HTML (shown ABOVE the image via markdown)
+    badge_parts = []
+    if similarity_pct:
+        badge_parts.append(
+            f'<span style="display:inline-block;background:linear-gradient(135deg,#e50914,#7c3aed);'
+            f'color:#fff;font-size:10px;font-weight:700;padding:3px 9px;'
+            f'border-radius:20px;letter-spacing:0.3px;">✦ {similarity_pct}</span>'
+        )
+    if rank > 0 and not similarity_pct:
+        badge_parts.append(
+            f'<span style="display:inline-flex;align-items:center;justify-content:center;'
+            f'width:22px;height:22px;border-radius:50%;'
+            f'background:linear-gradient(135deg,#e50914,#7c3aed);'
+            f'color:#fff;font-size:11px;font-weight:800;">#{rank}</span>'
+        )
+    if is_tv:
+        badge_parts.append(
+            f'<span style="display:inline-block;background:rgba(124,58,237,0.85);'
+            f'color:#fff;font-size:9px;font-weight:800;letter-spacing:1px;'
+            f'padding:3px 8px;border-radius:4px;text-transform:uppercase;">SERIES</span>'
+        )
+
+    safe_title = title.replace("<", "&lt;").replace(">", "&gt;")
+    # Clean title for display: strip the year suffix "(1995)" from footer text
+    import re as _re
+    display_title = _re.sub(r"\s*\(\d{4}\)\s*$", "", title).strip()
+
+    with col:
+        # ── top badge row ─────────────────────────────────────────────
+        if badge_parts:
+            st.markdown(
+                f'<div style="display:flex;gap:5px;align-items:center;'
+                f'margin-bottom:5px;min-height:22px;">'
+                + "".join(badge_parts)
+                + "</div>",
+                unsafe_allow_html=True,
+            )
+        else:
+            st.markdown('<div style="min-height:27px;"></div>', unsafe_allow_html=True)
+
+        # ── poster image via st.image (never stripped by Streamlit) ───
+        try:
+            st.image(poster_url, use_container_width=True)
+        except Exception:
+            # Data-URI SVG placeholders also work via st.image
+            from utils.tmdb import placeholder_img_url as _ph
+            st.image(_ph(genres, title), use_container_width=True)
+
+        # ── footer: title + meta ──────────────────────────────────────
+        rating_html = (
+            f'<span style="color:#fbbf24;font-size:11px;font-weight:700;">⭐ {rating}</span>'
+            if rating else ""
+        )
+        year_html = (
+            f'<span style="color:#94a3b8;font-size:11px;">{year}</span>'
+            if year else ""
+        )
+        meta_parts = [p for p in [year_html, rating_html] if p]
+        meta_row   = (
+            f'<div style="display:flex;align-items:center;gap:8px;margin-top:3px;">'
+            + "".join(meta_parts)
+            + "</div>"
+        ) if meta_parts else ""
+
+        genre_row = (
+            f'<div style="margin-top:4px;">'
+            f'<span style="font-size:10px;color:#a78bfa;background:rgba(124,58,237,0.15);'
+            f'border:1px solid rgba(124,58,237,0.25);padding:1px 7px;border-radius:20px;">'
+            f'{genre_text}</span></div>'
+        ) if genre_text else ""
+
+        st.markdown(
+            f'<div style="padding:6px 2px 10px;">'
+            f'  <div style="font-size:13px;font-weight:700;color:#f1f1f1;'
+            f'              line-height:1.3;white-space:nowrap;overflow:hidden;'
+            f'              text-overflow:ellipsis;" title="{safe_title}">'
+            f'    {display_title}'
+            f'  </div>'
+            f'  {meta_row}'
+            f'  {genre_row}'
+            f'</div>',
+            unsafe_allow_html=True,
+        )
+
+
 def poster_card_html(
     title: str,
     poster_url: str,
@@ -591,34 +660,36 @@ def poster_card_html(
     is_tv: bool = False,
 ) -> str:
     """
-    Return HTML for a poster-first movie/TV card.
-    poster_url may be an https:// URL or a data:image/svg+xml;base64,… URI.
+    Legacy shim kept for backward compatibility with tests.
+    New code should call render_poster_card() directly.
+
+    Returns a self-contained HTML card that works when Streamlit's
+    iframe security allows data: URIs (placeholders always work;
+    https:// TMDB URLs require render_poster_card for reliability).
     """
-    genre_parts = [g.strip() for g in genres.replace("|", ",").split(",") if g.strip()]
-    pills = "".join(
-        f'<span class="poster-genre-pill">{g}</span>'
-        for g in genre_parts[:2]
-    )
+    import re as _re
+    genre_parts   = [g.strip() for g in genres.replace("|", ",").split(",") if g.strip()]
+    genre_text    = "  ·  ".join(genre_parts[:2]) if genre_parts else ""
+    display_title = _re.sub(r"\s*\(\d{4}\)\s*$", "", title).strip()
+    safe_title    = title.replace('"', "&quot;").replace("'", "&#39;")
+
     year_html   = f'<span class="poster-year">{year}</span>' if year else ""
     rating_html = f'<span class="poster-rating">⭐ {rating}</span>' if rating else ""
 
-    top_badge = ""
     if similarity_pct:
         top_badge = f'<div class="sim-badge-poster">✦ {similarity_pct}</div>'
     elif rank > 0:
         top_badge = f'<div class="poster-rank">#{rank}</div>'
+    else:
+        top_badge = ""
     if is_tv:
         top_badge += '<div class="tv-badge" style="top:40px;">SERIES</div>'
-
-    # Escape title for HTML attribute
-    safe_title = title.replace('"', "&quot;").replace("'", "&#39;")
 
     return f"""
 <div class="poster-card">
   {top_badge}
   <img class="poster-img" src="{poster_url}"
-       alt="{safe_title}"
-       loading="lazy"
+       alt="{safe_title}" loading="lazy"
        onerror="this.style.display='none';this.nextElementSibling.style.display='flex';"
   />
   <div style="display:none;width:100%;aspect-ratio:2/3;background:#12121a;
@@ -628,11 +699,10 @@ def poster_card_html(
   </div>
   <div class="poster-overlay"></div>
   <div class="poster-info">
-    <div class="poster-title" title="{safe_title}">{title}</div>
+    <div class="poster-title" title="{safe_title}">{display_title}</div>
     <div class="poster-meta">
       {year_html}
       {rating_html}
-      {pills}
     </div>
   </div>
 </div>"""
