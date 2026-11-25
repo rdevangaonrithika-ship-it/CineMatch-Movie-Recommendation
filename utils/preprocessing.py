@@ -47,10 +47,10 @@ def clean_movies(df: pd.DataFrame) -> pd.DataFrame:
     df = df.copy()
 
     # 1. Drop rows missing essential fields
-    df.dropna(subset=["movieId", "title"], inplace=True)
+    df = df.dropna(subset=["movieId", "title"])
 
     # 2. Remove fully duplicate rows
-    df.drop_duplicates(inplace=True)
+    df = df.drop_duplicates()
 
     # 3. Handle missing/unknown genres
     df["genres"] = df["genres"].fillna(UNKNOWN_GENRE_PLACEHOLDER)
@@ -62,9 +62,9 @@ def clean_movies(df: pd.DataFrame) -> pd.DataFrame:
 
     # 5. Ensure movieId is integer
     df["movieId"] = pd.to_numeric(df["movieId"], errors="coerce").astype("Int64")
-    df.dropna(subset=["movieId"], inplace=True)
+    df = df.dropna(subset=["movieId"])
 
-    df.reset_index(drop=True, inplace=True)
+    df = df.reset_index(drop=True)
     return df
 
 

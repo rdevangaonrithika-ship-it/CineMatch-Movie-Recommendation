@@ -57,54 +57,54 @@ movies_df["year"] = movies_df["title"].apply(extract_year)
 
 st.markdown('<div class="cm-page">', unsafe_allow_html=True)
 st.markdown("""
-<div style="padding:40px 0 28px;">
-  <div style="font-size:11px;color:#7c3aed;font-weight:700;
-              letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">
-    Browse · Search · Filter
+<div style="padding:36px 0 24px;">
+  <div style="font-size:11px; color:#a78bfa; font-weight:800;
+              letter-spacing:1.8px; text-transform:uppercase; margin-bottom:10px;">
+    Catalogue Exploration · Real-Time Filters
   </div>
-  <h1 style="font-size:2.4rem;font-weight:900;color:#f1f1f1;
-             letter-spacing:-1px;line-height:1.1;margin-bottom:14px;">
+  <h1 style="font-size:2.6rem; font-weight:900; color:#ffffff;
+             letter-spacing:-1.2px; line-height:1.1; margin-bottom:12px;">
     Discover Movies
   </h1>
-  <p style="color:#8892a4;font-size:15px;max-width:560px;line-height:1.65;">
-    Explore the full catalogue as a poster grid. Filter, sort, and add to your watchlist.
+  <p style="color:#94a3b8; font-size:16px; max-width:620px; line-height:1.65;">
+    Explore our complete indexed film library. Filter by genre, release era, and critic ratings.
+    Add titles directly to your watchlist or launch instant ML recommendations.
   </p>
 </div>
 """, unsafe_allow_html=True)
 
-# ── Filter bar ────────────────────────────────────────────────────────────────
+# ── Filter Bar ────────────────────────────────────────────────────────────────
 st.markdown("""
-<div style="background:#12121a;border:1px solid #1e2a3a;border-radius:14px;
-            padding:24px 24px 20px;margin-bottom:28px;">
+<div style="background:#111118; border:1px solid #1e2230; border-radius:16px;
+            padding:24px 26px 20px; margin-bottom:28px;">
 """, unsafe_allow_html=True)
 
-f1, f2, f3, f4, f5 = st.columns([3, 2, 1.5, 1.5, 1.5])
+f1, f2, f3, f4, f5 = st.columns([3, 2.2, 1.3, 1.4, 1.2])
 with f1:
-    search_q   = st.text_input("SEARCH TITLE",
-                               placeholder="e.g. Toy Story, Batman…",
+    search_q   = st.text_input("SEARCH BY TITLE",
+                               placeholder="e.g. Toy Story, Batman, Pulp Fiction...",
                                key="disc_search")
 with f2:
-    sel_genres = st.multiselect("GENRE", genre_list,
-                                placeholder="All genres", key="disc_genres")
+    sel_genres = st.multiselect("GENRES", genre_list,
+                                placeholder="All Genres", key="disc_genres")
 with f3:
-    # Build year options from actual data
     years_avail = sorted(
         {y for y in movies_df["year"] if y}, reverse=True
     )
-    year_opts = ["Any"] + years_avail
-    sel_year  = st.selectbox("YEAR", year_opts, key="disc_year")
+    year_opts = ["Any Year"] + years_avail
+    sel_year  = st.selectbox("RELEASE YEAR", year_opts, key="disc_year")
 with f4:
-    sort_by    = st.selectbox("SORT BY",
-                              ["Title A–Z","Title Z–A","Rating ↓","Genre"],
+    sort_by    = st.selectbox("SORT ORDER",
+                              ["Title A–Z", "Title Z–A", "Rating ↓", "Genre"],
                               key="disc_sort")
 with f5:
     min_rating = st.selectbox("MIN RATING",
-                              ["Any","3.0+","3.5+","4.0+","4.5+"],
+                              ["Any Rating", "3.0+", "3.5+", "4.0+", "4.5+"],
                               key="disc_minrating")
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# ── Apply filters ─────────────────────────────────────────────────────────────
+# ── Apply Filters ─────────────────────────────────────────────────────────────
 filtered = movies_df.copy()
 
 if search_q.strip():
@@ -115,9 +115,9 @@ if sel_genres:
     def _has(gs):
         return any(g in {x.strip() for x in gs.split("|")} for g in sel_genres)
     filtered = filtered[filtered["genres"].apply(_has)]
-if sel_year != "Any":
+if sel_year != "Any Year":
     filtered = filtered[filtered["year"] == sel_year]
-if min_rating != "Any":
+if min_rating != "Any Rating":
     thr = float(min_rating.replace("+",""))
     filtered = filtered[filtered["avg_rating"].fillna(0) >= thr]
 
@@ -138,19 +138,20 @@ if st.session_state.get("_disc_fkey") != fkey:
     st.session_state.explore_page  = 1
     st.session_state["_disc_fkey"] = fkey
 
-# ── Result count ──────────────────────────────────────────────────────────────
+# ── Result Count Bar ──────────────────────────────────────────────────────────
 parts = []
-if search_q.strip():  parts.append(f'title "{search_q.strip()}"')
-if sel_genres:        parts.append(f'genre: {", ".join(sel_genres)}')
-if sel_year != "Any": parts.append(f'year: {sel_year}')
-if min_rating!="Any": parts.append(f'rating ≥ {min_rating}')
-desc = " &amp; ".join(parts) if parts else "all movies"
+if search_q.strip():       parts.append(f'keyword "{search_q.strip()}"')
+if sel_genres:             parts.append(f'genres: {", ".join(sel_genres)}')
+if sel_year != "Any Year": parts.append(f'year: {sel_year}')
+if min_rating != "Any Rating": parts.append(f'rating ≥ {min_rating}')
+desc = " &amp; ".join(parts) if parts else "all indexed titles"
 
 st.markdown(
-    f'<div style="font-size:14px;color:#8892a4;margin-bottom:20px;">'
-    f'Showing <strong style="color:#f1f1f1;">{len(filtered)}</strong>'
-    f' of <strong style="color:#f1f1f1;">{len(movies_df)}</strong>'
-    f' movies — {desc}</div>',
+    f'<div style="font-size:14px; color:#94a3b8; margin-bottom:22px; display:flex; justify-content:space-between; align-items:center;">'
+    f'<div>Showing <strong style="color:#ffffff;">{len(filtered)}</strong>'
+    f' of <strong style="color:#ffffff;">{len(movies_df)}</strong>'
+    f' movies — {desc}</div>'
+    f'</div>',
     unsafe_allow_html=True,
 )
 
@@ -164,12 +165,12 @@ start_idx = (page - 1) * PAGE_SIZE
 end_idx   = min(start_idx + PAGE_SIZE, len(filtered))
 page_data = filtered.iloc[start_idx:end_idx]
 
-# ── Poster grid ───────────────────────────────────────────────────────────────
+# ── Poster Grid ───────────────────────────────────────────────────────────────
 COLS = 5
 if len(page_data) == 0:
-    empty_state("🔍","No Movies Found","Try adjusting your filters.")
+    empty_state("🔍", "No Movies Matched Your Filters", "Try clearing some filters or searching for another keyword.")
 else:
-    wl_titles  = [m["title"] for m in st.session_state.watchlist]
+    wl_titles = [m["title"] for m in st.session_state.watchlist]
     wl_adds, wl_rems = [], []
 
     for row_start in range(0, len(page_data), COLS):
@@ -193,15 +194,15 @@ else:
                     unsafe_allow_html=True,
                 )
                 if in_wl:
-                    if st.button("❤️", key=f"d_wl_{df_idx}",
-                                 help=f"Remove '{movie['title']}'"):
+                    if st.button("❤️ Saved", key=f"d_wl_{df_idx}",
+                                 help=f"Remove '{movie['title']}'", use_container_width=True):
                         wl_rems.append(movie["title"])
                 else:
-                    if st.button("🤍", key=f"d_wl_{df_idx}",
-                                 help=f"Add '{movie['title']}' to watchlist"):
+                    if st.button("🤍 Watchlist", key=f"d_wl_{df_idx}",
+                                 help=f"Add '{movie['title']}' to watchlist", use_container_width=True):
                         wl_adds.append({
-                            "title":movie["title"],"genres":movie["genres"],
-                            "year":year,"poster_url":poster,
+                            "title": movie["title"], "genres": movie["genres"],
+                            "year": year, "poster_url": poster,
                         })
         st.markdown("<br>", unsafe_allow_html=True)
 
@@ -214,27 +215,28 @@ else:
         ]
         st.rerun()
 
-# ── Pagination controls ───────────────────────────────────────────────────────
+# ── Pagination Controls ───────────────────────────────────────────────────────
 st.markdown("<br>", unsafe_allow_html=True)
-pc1, pc2, pc3 = st.columns([1,2,1])
+pc1, pc2, pc3 = st.columns([1, 2, 1])
 with pc1:
-    if st.button("◀  Previous", disabled=(page<=1),
+    if st.button("◀  Previous Page", disabled=(page <= 1),
                  use_container_width=True, key="disc_prev"):
-        st.session_state.explore_page = max(1, page-1); st.rerun()
+        st.session_state.explore_page = max(1, page - 1)
+        st.rerun()
 with pc2:
     st.markdown(
-        f'<div style="text-align:center;padding:10px 0;font-size:13px;color:#8892a4;">'
-        f'Page <span style="color:#e50914;font-weight:700;">{page}</span>'
-        f' of {total_pages} ({start_idx+1}–{end_idx} of {len(filtered)})</div>',
+        f'<div style="text-align:center; padding:10px 0; font-size:13px; color:#8892a4;">'
+        f'Page <span style="color:#e50914; font-weight:800;">{page}</span>'
+        f' of {total_pages} &nbsp;({start_idx+1}–{end_idx} of {len(filtered)} titles)</div>',
         unsafe_allow_html=True,
     )
 with pc3:
-    if st.button("Next  ▶", disabled=(page>=total_pages),
+    if st.button("Next Page  ▶", disabled=(page >= total_pages),
                  use_container_width=True, key="disc_next"):
-        st.session_state.explore_page = min(total_pages, page+1); st.rerun()
+        st.session_state.explore_page = min(total_pages, page + 1)
+        st.rerun()
 
 st.markdown("""
 <div class="cm-footer">
-  CineMatch · MovieLens Small Dataset ·
-  <a href="https://grouplens.org/datasets/movielens/" target="_blank">GroupLens Research</a>
+  CineMatch Catalogue · Powered by MovieLens &amp; TMDB
 </div></div>""", unsafe_allow_html=True)

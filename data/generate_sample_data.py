@@ -234,6 +234,18 @@ MOVIES = [
     (671,"Crimson Tide (1995)",                        "Drama|Thriller|War"),
     (736,"Twister (1996)",                             "Action|Adventure|Thriller"),
     (780,"Independence Day (a.k.a. ID4) (1996)",       "Action|Adventure|Sci-Fi|Thriller"),
+    (1001,"Inception (2010)",                          "Action|Crime|Drama|Mystery|Sci-Fi|Thriller"),
+    (1002,"Interstellar (2014)",                       "Sci-Fi|IMAX"),
+    (1003,"Dark Knight, The (2008)",                   "Action|Crime|Drama|IMAX"),
+    (1004,"Titanic (1997)",                            "Drama|Romance"),
+    (1005,"Avatar (2009)",                             "Action|Adventure|Sci-Fi|IMAX"),
+    (1006,"Avengers, The (2012)",                      "Action|Adventure|Sci-Fi|IMAX"),
+    (1007,"Harry Potter and the Sorcerer's Stone (2001)","Adventure|Children|Fantasy"),
+    (1008,"Matrix, The (1999)",                        "Action|Sci-Fi|Thriller"),
+    (1009,"Gladiator (2000)",                          "Action|Adventure|Drama"),
+    (1010,"Lord of the Rings: The Fellowship of the Ring, The (2001)","Adventure|Fantasy"),
+    (1011,"Fight Club (1999)",                         "Action|Crime|Drama|Thriller"),
+    (1012,"Godfather, The (1972)",                     "Crime|Drama"),
 ]
 
 # Remove duplicates (keep first occurrence by movieId)

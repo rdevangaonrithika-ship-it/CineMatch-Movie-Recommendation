@@ -252,7 +252,7 @@ with rc:
 
 st.markdown("""
 <div class="cm-footer">
-  CineMatch · ML Mini Project ·
+  CineMatch · Stream &amp; Discover Platform ·
   Dataset: <a href="https://grouplens.org/datasets/movielens/" target="_blank">MovieLens</a>
   · Posters: <a href="https://www.themoviedb.org/" target="_blank">TMDB</a>
 </div></div>""", unsafe_allow_html=True)

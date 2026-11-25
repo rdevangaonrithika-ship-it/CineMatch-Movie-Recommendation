@@ -1,7 +1,7 @@
 """
 pages/1_Recommend_Movies.py
 ----------------------------
-Premium Recommendation Page — poster-first, ML-powered.
+CineMatch Recommendations Studio – Visual ML-powered discovery.
 """
 
 import os, sys, time
@@ -19,7 +19,7 @@ from utils.styles import (
 from utils.tmdb import get_poster_url, get_movie_details, has_api_key
 
 st.set_page_config(
-    page_title="Recommendations – CineMatch",
+    page_title="Recommendations Studio – CineMatch",
     page_icon="🎯", layout="wide",
     initial_sidebar_state="expanded",
 )
@@ -30,12 +30,12 @@ if "watchlist" not in st.session_state:
     st.session_state.watchlist = []
 
 # ── Load model ────────────────────────────────────────────────────────────────
-with st.spinner("Loading recommendation engine…"):
+with st.spinner("Initializing recommendation engine…"):
     try:
         recommender = get_recommender()
         model_ok    = True
     except Exception as exc:
-        st.error(f"⚠️ Failed to load model: {exc}")
+        st.error(f"⚠️ Failed to load recommendation model: {exc}")
         model_ok = False
         st.stop()
 
@@ -43,36 +43,36 @@ all_titles = recommender.get_all_titles()
 
 st.markdown('<div class="cm-page">', unsafe_allow_html=True)
 
-# ── Page header ───────────────────────────────────────────────────────────────
+# ── Page Header ───────────────────────────────────────────────────────────────
 st.markdown("""
-<div style="padding:40px 0 28px;">
-  <div style="font-size:11px;color:#7c3aed;font-weight:700;
-              letter-spacing:1.5px;text-transform:uppercase;margin-bottom:10px;">
-    Content-Based Filtering · TF-IDF · Cosine Similarity
+<div style="padding: 36px 0 24px;">
+  <div style="font-size: 11px; color: #a78bfa; font-weight: 800;
+              letter-spacing: 1.8px; text-transform: uppercase; margin-bottom: 10px;">
+    Similarity Engine · Visual Discovery
   </div>
-  <h1 style="font-size:2.4rem;font-weight:900;color:#f1f1f1;
-             letter-spacing:-1px;line-height:1.1;margin-bottom:14px;">
+  <h1 style="font-size: 2.6rem; font-weight: 900; color: #ffffff;
+             letter-spacing: -1.2px; line-height: 1.1; margin-bottom: 12px;">
     Find Movies You'll Love
   </h1>
-  <p style="color:#8892a4;font-size:15px;max-width:580px;line-height:1.65;">
-    Select any movie and our ML engine instantly finds the most similar films
-    based on genre analysis — displayed as beautiful poster cards.
+  <p style="color: #94a3b8; font-size: 16px; max-width: 620px; line-height: 1.65;">
+    Select any title from our indexed library. CineMatch analyzes its full thematic profile
+    and instantly generates the closest matching films as high-impact poster cards.
   </p>
 </div>
 """, unsafe_allow_html=True)
 
-# ── Controls ──────────────────────────────────────────────────────────────────
+# ── Selector & Controls ───────────────────────────────────────────────────────
 st.markdown("""
-<div style="background:#12121a;border:1px solid #1e2a3a;border-radius:14px;
-            padding:28px 28px 24px;margin-bottom:28px;">
+<div style="background:#111118; border:1px solid #1e2230; border-radius:16px;
+            padding:26px 28px 22px; margin-bottom:28px;">
 """, unsafe_allow_html=True)
 
-c1, c2, c3 = st.columns([4, 1, 1])
+c1, c2, c3 = st.columns([4, 1.2, 1.4])
 with c1:
     selected_movie = st.selectbox(
-        "SELECT A MOVIE",
+        "CHOOSE OR SEARCH A MOVIE",
         [""] + all_titles,
-        format_func=lambda x: "— Search or choose a movie —" if x == "" else x,
+        format_func=lambda x: "— Type or select a movie to explore —" if x == "" else x,
         key="rec_movie_select",
     )
 with c2:
@@ -80,7 +80,7 @@ with c2:
 with c3:
     st.markdown("<br>", unsafe_allow_html=True)
     find_btn = st.button(
-        "🎯 Find Similar",
+        "🎯 Find Similar Movies",
         disabled=not selected_movie,
         use_container_width=True,
         key="rec_find_btn",
@@ -88,14 +88,13 @@ with c3:
 
 st.markdown("</div>", unsafe_allow_html=True)
 
-# ── Selected movie detail panel ───────────────────────────────────────────────
+# ── Selected Movie Rich Inspector ─────────────────────────────────────────────
 if selected_movie:
-    info  = recommender.get_movie_info(selected_movie)
+    info = recommender.get_movie_info(selected_movie)
     if info:
-        year  = extract_year(info["title"])
+        year = extract_year(info["title"])
 
-        # Fetch rich details + poster
-        with st.spinner("Loading poster…"):
+        with st.spinner("Fetching studio media…"):
             details = get_movie_details(info["title"], year, info["genres"])
 
         poster_url   = details["poster_url"]
@@ -105,7 +104,6 @@ if selected_movie:
         vote         = details["vote_average"]
         tagline      = details["tagline"]
 
-        # Genre pills from original dataset genres (reliable)
         genre_parts = [g.strip() for g in info["genres"].split("|") if g.strip()]
         genre_pills = "".join(
             f'<span class="detail-pill detail-pill-genre">{g}</span>'
@@ -115,7 +113,6 @@ if selected_movie:
         rating_pill  = f'<span class="detail-pill detail-pill-rating">⭐ {vote}</span>' if vote > 0 else ""
         runtime_pill = f'<span class="detail-pill detail-pill-runtime">⏱ {runtime} min</span>' if runtime > 0 else ""
 
-        # Backdrop (top of panel)
         backdrop_html = (
             f'<img src="{backdrop_url}" class="detail-backdrop" alt="">'
             if backdrop_url and not backdrop_url.startswith("data:") else ""
@@ -137,35 +134,40 @@ if selected_movie:
               <div class="detail-meta-row">
                 {year_pill}{rating_pill}{runtime_pill}{genre_pills}
               </div>
-              {"<div class='detail-overview'>"+overview+"</div>" if overview else ""}
+              {"<div class='detail-overview'>"+overview+"</div>" if overview else "<div class='detail-overview' style='color:#64748b;'>Ready for similarity recommendation matching. Click 'Find Similar Movies' to explore.</div>"}
             </div>
           </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Watchlist toggle for selected movie
-        wl_col, _ = st.columns([1, 5])
+        wl_col, _ = st.columns([1.5, 4.5])
         with wl_col:
             if in_wl:
-                if st.button("❤️ Remove from Watchlist", key="sel_wl_rem"):
+                if st.button("❤️ Remove from Watchlist", key="sel_wl_rem", use_container_width=True):
                     st.session_state.watchlist = [
                         m for m in st.session_state.watchlist
                         if m["title"] != info["title"]
                     ]
                     st.rerun()
             else:
-                if st.button("🤍 Add to Watchlist", key="sel_wl_add"):
+                if st.button("🤍 Add to Watchlist", key="sel_wl_add", use_container_width=True):
                     st.session_state.watchlist.append({
                         "title": info["title"], "genres": info["genres"],
                         "year": year, "poster_url": poster_url,
                     })
                     st.rerun()
 
-# ── Recommendation output ─────────────────────────────────────────────────────
+# ── Recommendation Output ─────────────────────────────────────────────────────
+# Auto-generate recommendations when a movie is picked or Find button clicked
+should_recommend = find_btn or (selected_movie and "last_recommended" in st.session_state and st.session_state.last_recommended == selected_movie)
+
 if find_btn and selected_movie:
-    with st.spinner("Calculating cosine similarity…"):
-        t0     = time.time()
-        result = recommender.recommend_movies(selected_movie, n_recs)
+    st.session_state.last_recommended = selected_movie
+
+if (find_btn or should_recommend) and selected_movie:
+    with st.spinner("Computing cosine similarity across feature space…"):
+        t0      = time.time()
+        result  = recommender.recommend_movies(selected_movie, n_recs)
         elapsed = round(time.time() - t0, 4)
 
     if not result["success"]:
@@ -176,22 +178,22 @@ if find_btn and selected_movie:
     else:
         recs = result["recommendations"]
 
+        st.markdown("<br>", unsafe_allow_html=True)
         st.markdown(f"""
-        <div style="display:flex;align-items:center;justify-content:space-between;
-                    flex-wrap:wrap;gap:12px;margin-bottom:24px;">
+        <div style="display:flex; align-items:center; justify-content:space-between;
+                    flex-wrap:wrap; gap:12px; margin-bottom:24px;">
           <div>
-            <div style="font-size:18px;font-weight:800;color:#f1f1f1;">
-              Top {len(recs)} Movies Similar to "{result['query_title']}"
+            <div style="font-size:22px; font-weight:800; color:#ffffff;">
+              Top {len(recs)} Matches for "{result['query_title']}"
             </div>
-            <div style="font-size:12px;color:#8892a4;margin-top:4px;">
+            <div style="font-size:13px; color:#94a3b8; margin-top:4px;">
               Computed in {result['recommendation_time_sec']}s &nbsp;·&nbsp;
-              Genre match: <strong style="color:#a78bfa;">{result['query_genres']}</strong>
+              Feature Profile: <strong style="color:#a78bfa;">{result['query_genres']}</strong>
             </div>
           </div>
         </div>
         """, unsafe_allow_html=True)
 
-        # Fetch posters for all recs (cached after first call)
         COLS = 5
         wl_titles = [m["title"] for m in st.session_state.watchlist]
         wl_adds, wl_rems = [], []
@@ -217,12 +219,10 @@ if find_btn and selected_movie:
                         unsafe_allow_html=True,
                     )
                     if in_wl:
-                        if st.button("❤️", key=f"wr_{rank}",
-                                     help=f"Remove '{rec['title']}'"):
+                        if st.button("❤️ Saved", key=f"wr_{rank}", help=f"Remove '{rec['title']}'", use_container_width=True):
                             wl_rems.append(rec["title"])
                     else:
-                        if st.button("🤍", key=f"wa_{rank}",
-                                     help=f"Add '{rec['title']}' to watchlist"):
+                        if st.button("🤍 Watchlist", key=f"wa_{rank}", help=f"Add '{rec['title']}' to watchlist", use_container_width=True):
                             wl_adds.append({
                                 "title": rec["title"], "genres": rec["genres"],
                                 "year": year, "poster_url": poster,
@@ -238,25 +238,14 @@ if find_btn and selected_movie:
             ]
             st.rerun()
 
-        # Disclaimer
-        st.markdown("""
-        <div style="background:#0d0d1a;border:1px solid #1e2a3a;border-radius:10px;
-                    padding:14px 20px;display:flex;gap:12px;">
-          <span style="flex-shrink:0;">ℹ️</span>
-          <p style="font-size:12px;color:#4a5568;line-height:1.6;margin:0;">
-            Recommendations use <strong style="color:#8892a4;">TF-IDF</strong> on genres
-            and <strong style="color:#8892a4;">Cosine Similarity</strong>.
-            A higher % means more genre overlap. Plots, cast and user history are not used.
-          </p>
-        </div>
-        """, unsafe_allow_html=True)
-
 elif not selected_movie:
     empty_state(
         "🎬", "Choose a Movie to Get Started",
-        "Select any movie from the dropdown above, then click Find Similar.",
+        "Select any title from the search bar above, then tap 'Find Similar Movies'.",
     )
 
 st.markdown("""
-<div class="cm-footer">CineMatch · Content-Based Filtering · TF-IDF + Cosine Similarity</div>
+<div class="cm-footer">
+  CineMatch Studio · Stream &amp; Discover
+</div>
 </div>""", unsafe_allow_html=True)
